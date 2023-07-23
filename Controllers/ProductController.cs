@@ -6,21 +6,25 @@ namespace ApiCrudDotNet.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ProductController : ControllerBase
+    public class ProductsController : ControllerBase
     {
-        private static List<Product> _products = new List<Product>();
-        private static int _nextId = 1;
+        private readonly AppDbContext _context;
+
+        public ProductsController(AppDbContext context)
+        {
+            _context = context;
+        }
 
         [HttpGet]
         public ActionResult<IEnumerable<Product>> Get()
         {
-            return _products;
+            return _context.Products;
         }
 
         [HttpGet("{id}")]
         public ActionResult<Product> Get(int id)
         {
-            var product = _products.Find(i => i.Id == id);
+            var product = _context.Products.Find(id);
             if (product == null)
                 return NotFound();
 
@@ -30,31 +34,33 @@ namespace ApiCrudDotNet.Controllers
         [HttpPost]
         public IActionResult Post([FromBody] Product newProduct)
         {
-            newProduct.Id = _nextId++;
-            _products.Add(newProduct);
+            _context.Products.Add(newProduct);
+            _context.SaveChanges();
             return CreatedAtAction(nameof(Get), new { id = newProduct.Id }, newProduct);
         }
 
         [HttpPut("{id}")]
         public IActionResult Put(int id, [FromBody] Product updatedProduct)
         {
-            var product = _products.Find(i => i.Id == id);
+            var product = _context.Products.Find(id);
             if (product == null)
                 return NotFound();
 
             product.nome = updatedProduct.nome;
             product.email = updatedProduct.email;
+            _context.SaveChanges();
             return NoContent();
         }
 
         [HttpDelete("{id}")]
         public IActionResult Delete(int id)
         {
-            var product = _products.Find(i => i.Id == id);
+            var product = _context.Products.Find(id);
             if (product == null)
                 return NotFound();
 
-            _products.Remove(product);
+            _context.Products.Remove(product);
+            _context.SaveChanges();
             return NoContent();
         }
     }

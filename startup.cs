@@ -3,12 +3,31 @@ using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using Serilog.Events;
 using Serilog.Formatting.Json;
+using Microsoft.EntityFrameworkCore;
+using ApiCrudDotNet.Models;
+using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.OpenApi.Models;
+
 
 
 public class Startup
 {
+    public IConfiguration Configuration { get; }
+
+    public Startup(IConfiguration configuration)
+    {
+        Configuration = configuration;
+    }
     public void ConfigureServices(IServiceCollection services)
     {
+        // Configurar a conexão com o MySQL
+        var connectionString = Configuration.GetConnectionString("DefaultConnection");
+        services.AddDbContext<AppDbContext>(options =>
+            options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString))
+        );
+
         // Configurar o logger para escrever em um arquivo com formato JSON
         Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Information()
@@ -17,7 +36,7 @@ public class Startup
             .WriteTo.Console()
             .WriteTo.File(
                 new JsonFormatter(),
-                "C:/Users/Gabri/Desktop/Projetos/ApiCrudDotNet/logs/log-.txt",
+                "C:/Users/Gabri/Desktop/Projetos/ApiCrudDotNet/logs/log.txt",
                 rollingInterval: RollingInterval.Day,
                 rollOnFileSizeLimit: true,
                 fileSizeLimitBytes: 10485760,
@@ -26,10 +45,16 @@ public class Startup
                 encoding: System.Text.Encoding.UTF8
             )
             .CreateLogger();
-
         // ...
 
+        // Configurar o Swagger
+        services.AddSwaggerGen(c =>
+        {
+            c.SwaggerDoc("v1", new OpenApiInfo { Title = "Minha API", Version = "v1" });
+        });
+
         services.AddControllers();
+
     }
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -40,7 +65,7 @@ public class Startup
         {
             app.UseDeveloperExceptionPage();
             app.UseSwagger();
-            app.UseSwaggerUI();
+            app.UseSwaggerUI(c => { c.SwaggerEndpoint("/swagger/v1/swagger.json", "Minha API V1"); });
         }
 
         // Configurar o middleware de logging

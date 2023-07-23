@@ -9,5 +9,6 @@ namespace ApiCrudDotNet.Models
         }
 
         public DbSet<Item> Items { get; set; }
+        public DbSet<Product> Products { get; set; }
     }
 }
