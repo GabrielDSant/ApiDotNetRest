@@ -8,7 +8,7 @@ namespace ApiCrudDotNet.Models
     public class Product
     {
         public int Id { get; set; }
-        public string nome { get; set; }
-        public string email { get; set; }
+        public required string nome { get; set; }
+        public required string email { get; set; }
     }
 }
